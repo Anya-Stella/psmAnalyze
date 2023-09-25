@@ -74,10 +74,14 @@ class line_segment{
 
   /**他のline_segmentを受け取り交点を[x, y]で出力する関数 */
   caluculateCrossPoint(another: line_segment){
+    // 2直線が平行の場合はendを採用する。
+    // ex)(new point(291,2), new point(294, 2))と(new point(291,2), new point(294, 2));
+    // psm分析では、a1 == a2になるのはa1=a2=0の時のみ
     const a1 = this.caluculateSlope();
     const b1 = this.caluculateIntercept();
     const a2 = another.caluculateSlope();
     const b2 = another.caluculateIntercept();
+    if(a1 == a2) return [this.end.x, this.end.y];
 
     let x = (b2 - b1)/(a1 - a2);
     let y = a1 * x + b1;
@@ -87,7 +91,7 @@ class line_segment{
 
 class primesLine{
   // line上の各点のスパンを変えるには、spanを変えてください。
-  static span = 50;
+  static span = 1;
   elementsArr: number[];
   hash: {};
   maxofAll: number;
@@ -151,6 +155,7 @@ class primesLine{
 
       if(hash1[key] == hash2[key] || highBefore !== highAfter ){
         // crossした場合の計算内容
+
         const x1 = Number(key);
         const x2 = Number(key) + primesLine.span;
         const line1 = new line_segment(new point(x1, hash1[key]), new point(x2, hash1[nextKey]));
@@ -184,21 +189,34 @@ console.log(`理想価格：${ expensive.calculatePrimesLineCross(cheap) }円`)
 console.log(`最低品質保証価格：${ expensive.calculatePrimesLineCross(tooCheap) }円`)
 
 
-
-
-
-
-
-
-
-
 // テストケース
 // const line1 = new line_segment(new point(0,0), new point(10, 10));
 // const line2 = new line_segment(new point(0,10), new point(10, 0));
-// console.log(line1.caluculateCrossPoint(line2));
-
-// console.log(expensive.hash)
-// console.log(cheap.hash)
-// console.log("---------")
-// console.log(expensive.calculateCrossPoint(cheap));
-
+// const line3 = new line_segment(new point(0,0), new point(0, 100));
+// const line4 = new line_segment(new point(0,100), new point(100, 0));
+// const line5 = new line_segment(new point(250, 50), new point(300, 100));
+// const line6 = new line_segment(new point(250, 50), new point(300, 0));
+// console.log(line1.caluculateCrossPoint(line2));//(5,5)ok
+// console.log(line2.caluculateCrossPoint(line1));//(5,5)ok
+// // console.log(line3.caluculateCrossPoint(line4));//(0,100)// 今回は、line上でx1とx2が被ることはない
+// // console.log(line4.caluculateCrossPoint(line3));//(0,100)
+// console.log(line5.caluculateCrossPoint(line6));// (250, 50)ok
+// console.log(line6.caluculateCrossPoint(line5));// (250, 50)ok
+// console.log("--------------------------------")
+// console.log(expensive.hash);
+// console.log(tooExpensive.hash);
+// console.log(cheap.hash);
+// console.log(tooCheap.hash);
+// console.log("---------------------------------")
+// span = 50
+// console.log(`最高価格：${ tooExpensive.calculatePrimesLineCross(cheap) }円`)// ok
+// console.log(`妥協価格：${ tooExpensive.calculatePrimesLineCross(tooCheap) }円`)// ok
+// console.log(`理想価格：${ expensive.calculatePrimesLineCross(cheap) }円`)// ok
+// console.log(`最低品質保証価格：${ expensive.calculatePrimesLineCross(tooCheap) }円`)// ok
+// console.log("----------------------------------");
+// span = 5 ok
+// span = 3の時価格にNaN
+// 追加テストケース
+// const line7 = new line_segment(new point(291,2), new point(294, 2));
+// const line8 = new line_segment(new point(291,2), new point(294, 2));//(294,2)
+// console.log(line7.caluculateCrossPoint(line8));
