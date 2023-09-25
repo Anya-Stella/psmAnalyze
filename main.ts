@@ -23,6 +23,66 @@ class csv {
     }
     return arr;
   }
+
+  /**recordsの中からsampleNumberを除いた最大値を求める関数 */
+  findMaxValue(){
+    let max: number  = Number(this.records[1][1]);
+
+    for(let i = 1; i < this.records.length; i++){
+      let record = this.records[i];
+
+      for(let j = 1; j < 5; j++){
+        let curr = Number(record[j]);
+        if( max < curr ) max = curr;
+      }
+    }
+
+    return max;
+  }
+}
+
+class point{
+  x: number;
+  y: number;
+
+  constructor(x: number, y: number){
+    this.x = x;
+    this.y = y
+  }
+}
+
+class line_segment{
+  start: point;
+  end: point;
+
+  constructor(start: point, end: point){
+    this.start = start;
+    this.end = end;
+  }
+
+  /**この線分の傾きを計算する関数 */
+  caluculateSlope(){
+    return (this.start.y - this.end.y) / (this.start.x - this.end.x);
+  }
+
+  /**この線分の切片を計算する関数 */
+  caluculateIntercept(){
+    const a = this.caluculateSlope();
+
+    return this.start.y - a*this.start.x;
+  }
+
+  /**他のline_segmentを受け取り交点を[x, y]で出力する関数 */
+  caluculateCrossPoint(another: line_segment){
+    const a1 = this.caluculateSlope();
+    const b1 = this.caluculateIntercept();
+    const a2 = another.caluculateSlope();
+    const b2 = another.caluculateIntercept();
+
+    let x = (b2 - b1)/(a1 - a2);
+    let y = a1 * x + b1;
+    return [x, y];
+  }
 }
 
 class primesLine{
@@ -30,20 +90,23 @@ class primesLine{
   static span = 50;
   elementsArr: number[];
   hash: {};
+  maxofAll: number;
 
-  constructor(arr: number[], isExpensive: boolean){
+  // elementArrは例えば、「高い」の価格だけが格納されている配列
+  // hashは、価格帯別の合計人数をそれぞれ格納するhashmap
+  constructor(arr: number[], maxOfAll: number, isExpensive: boolean){
     this.elementsArr = arr;
+    this.maxofAll = maxOfAll;
     this.hash = this.makeGraphOfmoneyAndNumber(primesLine.span, isExpensive);
   }
 
 
-  /**elementArrから価格帯別人数を出す関数 */
+  /**elementArrから価格帯別人数を格納した、hashmapを作る関数 */
   makeGraphOfmoneyAndNumber(span: number, isExpensive: boolean) {
-    // hashの作成
+    // 空hashの作成
     let hash = {};
-    const arrMax = Math.max(...this.elementsArr);
 
-    for(let i = 0; i <= Math.ceil(arrMax/span); i++){
+    for(let i = 0; i <= Math.ceil(this.maxofAll/span); i++){
       let curr = i*span
       hash[curr] = 0;
     }
@@ -71,8 +134,8 @@ class primesLine{
   }
 
 
-  /**他のprimesLineとの交点を出力する関数 */
-  calculateCrossPoint(another: primesLine){
+  /**他のprimesLineとの交点から、理想価格を出力する関数 */
+  calculatePrimesLineCross(another: primesLine){
     const hash1 = this.hash;
     const hash2 = another.hash;
     const key1 = Object.keys(hash1);
@@ -86,13 +149,14 @@ class primesLine{
       let highBefore = (hash1[key] > hash2[key]) ? 1 : 2;
       let highAfter = (hash1[nextKey] > hash2[nextKey]) ? 1 : 2;
 
-      // crossした場合は交点座標を計算する。
       if(hash1[key] == hash2[key] || highBefore !== highAfter ){
+        // crossした場合の計算内容
+        const x1 = Number(key);
+        const x2 = Number(key) + primesLine.span;
+        const line1 = new line_segment(new point(x1, hash1[key]), new point(x2, hash1[nextKey]));
+        const line2 = new line_segment(new point(x1, hash2[key]), new point(x2, hash2[nextKey]));
 
-
-
-        console.log(key);
-        break;
+        return Math.ceil(line1.caluculateCrossPoint(line2)[0]);
       }
   }
   }
@@ -101,21 +165,40 @@ class primesLine{
 
 
 
-
-
 // main
 // dataの定義
 const PSMrawdata =new csv("csv\\PSMrawdata.csv");
+const max = PSMrawdata.findMaxValue();
 
 // [高い][安い][高すぎる][安すぎる]の、各値だけをまとめた配列
-const expensive = new primesLine(PSMrawdata.makePriceArr(1), true);
-const cheap = new primesLine(PSMrawdata.makePriceArr(2), false);
-const tooExpensive = new primesLine(PSMrawdata.makePriceArr(3), true);
-const tooCheap = new primesLine(PSMrawdata.makePriceArr(4), false);
+const expensive = new primesLine(PSMrawdata.makePriceArr(1), max, true);
+const cheap = new primesLine(PSMrawdata.makePriceArr(2), max, false);
+const tooExpensive = new primesLine(PSMrawdata.makePriceArr(3), max, true);
+const tooCheap = new primesLine(PSMrawdata.makePriceArr(4), max, false);
+
+// 出力
+console.log("出力結果");
+console.log(`最高価格：${ tooExpensive.calculatePrimesLineCross(cheap) }円`)
+console.log(`妥協価格：${ tooExpensive.calculatePrimesLineCross(tooCheap) }円`)
+console.log(`理想価格：${ expensive.calculatePrimesLineCross(cheap) }円`)
+console.log(`最低品質保証価格：${ expensive.calculatePrimesLineCross(tooCheap) }円`)
 
 
-console.log(expensive.hash)
-console.log(cheap.hash)
-console.log("---------")
-console.log(expensive.calculateCrossPoint(cheap));
+
+
+
+
+
+
+
+
+// テストケース
+// const line1 = new line_segment(new point(0,0), new point(10, 10));
+// const line2 = new line_segment(new point(0,10), new point(10, 0));
+// console.log(line1.caluculateCrossPoint(line2));
+
+// console.log(expensive.hash)
+// console.log(cheap.hash)
+// console.log("---------")
+// console.log(expensive.calculateCrossPoint(cheap));
 
